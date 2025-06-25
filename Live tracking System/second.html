@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GPS Tracker (Google Maps)</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 40px; }
+    #map { height: 500px; width: 90%; margin: auto; }
+  </style>
+</head>
+<body>
+  <h1>Live GPS from Raspberry Pi</h1>
+  <div id="location">Loading GPS data...</div>
+  <div id="map"></div>
+
+  <script>
+    const piIP = "http://192.168.85.70:5000"; // ← Replace with your Pi's IP
+    let map, marker;
+
+    async function fetchLocation() {
+      try {
+        const response = await fetch(`${piIP}/location`);
+        const data = await response.json();
+
+        if (data.error) {
+          document.getElementById('location').innerText = "Error: " + data.error;
+          return;
+        }
+
+        const lat = parseFloat(data.latitude);
+        const lng = parseFloat(data.longitude);
+
+        document.getElementById('location').innerText =
+          `Latitude: ${lat}, Longitude: ${lng}`;
+
+        const position = { lat: lat, lng: lng };
+
+        if (!map) {
+          map = new google.maps.Map(document.getElementById("map"), {
+            center: position,
+            zoom: 16,
+          });
+          marker = new google.maps.Marker({
+            position: position,
+            map: map,
+            title: "You are here!",
+          });
+        } else {
+          marker.setPosition(position);
+          map.setCenter(position);
+        }
+
+      } catch (err) {
+        document.getElementById('location').innerText = "Fetch error: " + err;
+      }
+    }
+
+    fetchLocation();
+    setInterval(fetchLocation, 10000); // Refresh every 10 sec
+  </script>
+
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBSuvxk4X22-NMruf1jYEXdQDhQKGbk1Z0">
+  </script>
+</body>
+</html>
